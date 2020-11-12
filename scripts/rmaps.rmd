@@ -1,0 +1,96 @@
+---
+title: "Rmaps"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(pacman)
+p_load(tidyverse, leaflet, RColorBrewer, rgdal, sp,here)
+```
+
+# read in the shapefile
+```{r}
+jordan<-readOGR(here("data", "gadm36_JOR_1.shp"))
+```
+
+
+```{r}
+# View data fields in the shapefile
+head(jordan@data)
+
+#explore data attributes in shapefile
+combined@polygons@Polygons@coords
+class(combined)
+
+
+#Create leaflet map with default OpenStreetMap tiles
+jormap <- leaflet(jordan) %>% addTiles()
+
+# or use other basemaps for a different look (to see different available tiles, type providers$)
+jormap <- leaflet(jordan) %>% addProviderTiles(providers$Esri.WorldGrayCanvas) # this one has no labels
+  
+# add Jordan shapefile and color in regions
+jormap <- jormap %>%
+  addPolygons(stroke = FALSE,
+              smoothFactor = 0.2,
+              fillOpacity = .5,
+              fillColor = viridis(12,alpha=NULL)) # creates a vector of n contiguous color
+  
+# add lines
+jormap <- jormap %>% addPolylines(color = "grey",
+                        weight = .5)
+
+# add legend
+jormap %>% addLegend("bottomleft",
+                     color = topo.colors(12),
+                     labels = jordan@data$NAME_1,
+                     opacity = 0.6,
+                     title = "Regions")
+
+#View basic interactive map
+jormap
+
+```
+
+# color palette
+```{r}
+# load viridis package for color palette
+p_load(viridis)
+
+
+#create color palette for categorical data
+
+## first, turn NAME_1 variable into a factor
+jordan@data$NAME_1 <- factor(jordan@data$NAME_1)
+
+## Create palette
+pal <- colorFactor(topo.colors(12), jordan@data$NAME_1)
+
+
+
+# create map with new palette
+jormap <- leaflet(jordan) %>% addTiles() %>%
+  addPolygons(stroke = FALSE,
+              smoothFactor = 0.2,
+              fillOpacity = .2,
+              color = ~pal(jordan@data$NAME_1)) %>%
+  addProviderTiles(providers$CartoDB.Positron)
+```
+
+# add labels
+```{r}
+# add labels
+leaflet(jordan) %>%
+  addPolygons(stroke = FALSE,
+              smoothFactor = 0.2,
+              fillOpacity = .2,
+              color = ~pal(jordan@data$NAME_1),
+              label = jordan@data$NAME_1, # add labels
+              labelOptions = labelOptions(noHide = TRUE, textOnly = TRUE)) %>% #tweak label options
+  addProviderTiles(providers$Esri.WorldGrayCanvas)
+
+jormap
+```
+
