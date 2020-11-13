@@ -1,13 +1,15 @@
 ---
 title: "Rmaps"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
 library(pacman)
-p_load(tidyverse, leaflet, RColorBrewer, rgdal, sp,here)
+p_load(tidyverse, leaflet, RColorBrewer, rgdal, sp,here, viridis)
 ```
 
 # read in the shapefile
@@ -17,13 +19,9 @@ jordan<-readOGR(here("data", "gadm36_JOR_1.shp"))
 
 
 ```{r}
+glimpse(jordan)
 # View data fields in the shapefile
-head(jordan@data)
-
-#explore data attributes in shapefile
-combined@polygons@Polygons@coords
-class(combined)
-
+jordan@data
 
 #Create leaflet map with default OpenStreetMap tiles
 jormap <- leaflet(jordan) %>% addTiles()
@@ -34,17 +32,19 @@ jormap <- leaflet(jordan) %>% addProviderTiles(providers$Esri.WorldGrayCanvas) #
 # add Jordan shapefile and color in regions
 jormap <- jormap %>%
   addPolygons(stroke = FALSE,
-              smoothFactor = 0.2,
-              fillOpacity = .5,
-              fillColor = viridis(12,alpha=NULL)) # creates a vector of n contiguous color
+              smoothFactor = 0.5,
+              fillOpacity = .8,
+              fillColor = viridis(12,alpha=NULL)) %>%
+  addPolylines(color = "grey",
+                        weight = .5)# creates a vector of n contiguous color
   
 # add lines
-jormap <- jormap %>% addPolylines(color = "grey",
+jormap2 <- jormap %>% addPolylines(color = "grey",
                         weight = .5)
 
 # add legend
 jormap %>% addLegend("bottomleft",
-                     color = topo.colors(12),
+                     color = viridis(12,alpha=NULL),
                      labels = jordan@data$NAME_1,
                      opacity = 0.6,
                      title = "Regions")
@@ -68,8 +68,6 @@ jordan@data$NAME_1 <- factor(jordan@data$NAME_1)
 ## Create palette
 pal <- colorFactor(topo.colors(12), jordan@data$NAME_1)
 
-
-
 # create map with new palette
 jormap <- leaflet(jordan) %>% addTiles() %>%
   addPolygons(stroke = FALSE,
@@ -78,6 +76,8 @@ jormap <- leaflet(jordan) %>% addTiles() %>%
               color = ~pal(jordan@data$NAME_1)) %>%
   addProviderTiles(providers$CartoDB.Positron)
 ```
+
+# this maps show such and such, etc.
 
 # add labels
 ```{r}
